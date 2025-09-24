@@ -115,6 +115,36 @@ with st.container():
     )
 
 # --------------------------
+# NEW: Optional Lifestyle Inputs (for evidence-based chart)
+# --------------------------
+with st.expander("🧩 Optional lifestyle details (improves your snapshot)" if language == "English"
+                 else "🧩 تفاصيل نمط الحياة (اختياري)"):
+    cL1, cL2 = st.columns(2)
+    with cL1:
+        activity_minutes = st.number_input(
+            "Weekly activity (minutes)" if language == "English" else "النشاط الأسبوعي (دقائق)",
+            min_value=0, max_value=10000, value=0,
+            help="ADA recommends ≥150 min/week." if language == "English" else "توصي ADA بـ 150 دقيقة/أسبوع أو أكثر."
+        )
+        sleep_hours = st.number_input(
+            "Average sleep (hours/night)" if language == "English" else "متوسط النوم (ساعات/ليلة)",
+            min_value=0.0, max_value=24.0, value=0.0, step=0.5,
+            help="7–9 hours/night is generally associated with better outcomes." if language == "English"
+                 else "٧–٩ ساعات/ليلة ترتبط بنتائج أفضل."
+        )
+    with cL2:
+        diet_adherence = st.selectbox(
+            "Following a meal plan most days?" if language == "English" else "اتباع خطة غذائية معظم الأيام؟",
+            ["Prefer not to say", "Rarely", "Sometimes", "Often"] if language == "English"
+            else ["أفضل عدم الإفصاح", "نادراً", "أحياناً", "غالباً"]
+        )
+        monitoring_freq = st.selectbox(
+            "Glucose monitoring frequency" if language == "English" else "تواتر مراقبة سكر الدم",
+            ["Prefer not to say", "Less than daily", "Daily", "Multiple times/day"] if language == "English"
+            else ["أفضل عدم الإفصاح", "أقل من يومي", "يومي", "عدة مرات/اليوم"]
+        )
+
+# --------------------------
 # Medication Input Section
 # --------------------------
 with st.container():
@@ -133,7 +163,7 @@ with st.container():
                         messages=[
                             {"role": "system", "content": "You are a diabetes educator. Provide ADA/FDA-aligned patient education."},
                             {"role": "user", "content": f"Give patient-friendly education about {medication_name}, taken via {route}. \
-                                Include how it works, when to take it, precautions, and FDA/ADA notes if available."}
+                                Include how it works, when to take it, precautions, and FDA/ADA notes if available. {lang_note}"}
                         ],
                         max_tokens=600,
                         temperature=0.2
@@ -278,6 +308,46 @@ if st.button(tr("✨ Generate Education Summary")):
                 summary_text = response.choices[0].message.content
                 st.write(summary_text)
 
+                # --- Evidence-based Lifestyle Snapshot (scores 0–10) ---
+                if activity_minutes >= 150:
+                    exercise_score = 10
+                elif activity_minutes >= 90:
+                    exercise_score = 7
+                elif activity_minutes > 0:
+                    exercise_score = 4
+                else:
+                    exercise_score = 0
+
+                if 7.0 <= sleep_hours <= 9.0:
+                    sleep_score = 10
+                elif sleep_hours in (6.0, 10.0):
+                    sleep_score = 6
+                else:
+                    sleep_score = 3 if sleep_hours > 0 else 0
+
+                # Diet/monitor maps — keep exactly as proxies
+                diet_map_en = {"Prefer not to say": 0, "Rarely": 3, "Sometimes": 6, "Often": 9}
+                diet_map_ar = {"أفضل عدم الإفصاح": 0, "نادراً": 3, "أحياناً": 6, "غالباً": 9}
+                diet_score = (diet_map_en if language == "English" else diet_map_ar).get(diet_adherence, 0)
+
+                monitor_map_en = {"Prefer not to say": 0, "Less than daily": 4, "Daily": 7, "Multiple times/day": 9}
+                monitor_map_ar = {"أفضل عدم الإفصاح": 0, "أقل من يومي": 4, "يومي": 7, "عدة مرات/اليوم": 9}
+                monitor_score = (monitor_map_en if language == "English" else monitor_map_ar).get(monitoring_freq, 0)
+
+                st.subheader("📊 Lifestyle Snapshot (educational)" if language == "English" else "📊 لمحة عن نمط الحياة (تعليمي)")
+                df = pd.DataFrame(
+                    {"Score": [diet_score, exercise_score, monitor_score, sleep_score]},
+                    index=(["Diet awareness", "Exercise", "Monitoring", "Sleep"]
+                           if language == "English" else ["الوعي الغذائي", "التمارين", "المراقبة", "النوم"])
+                )
+                st.bar_chart(df)
+
+                with st.expander("What do these scores mean? (sources)" if language == "English" else "ماذا تعني هذه الدرجات؟ (مصادر)"):
+                    st.markdown(
+                        "- **Exercise:** ≥150 min/week of moderate activity is recommended for most adults with diabetes. [ADA / AHA]\n"
+                        "- **Sleep:** ~7–9 h/night is associated with better glycemic outcomes; short or long sleep links with higher A1c/risk. [Diabetes Care, meta-analyses]\n"
+                        "- **Diet awareness & Monitoring:** education proxies aligned with ADA lifestyle & nutrition guidance."
+                    )
 
                 # NEW: PDF download button
                 pdf_bytes = make_pdf(summary_text)
