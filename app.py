@@ -223,6 +223,43 @@ with st.container():
     if st.button(tr("Save my preference")):
         st.success("✅ Thank you! Your preferences have been saved."
                    if language == "English" else "✅ شكراً لك! تم حفظ تفضيلاتك.")
+# --- Silent CSV logging (optional, invisible to patient) ---
+try:
+    import pandas as pd, os, datetime
+
+    row = {
+        "timestamp_utc": datetime.datetime.utcnow().isoformat(timespec="seconds"),
+        "language": language,
+        "diabetes_type": diabetes_type,
+        "therapy_type": therapy_type,
+        "injections_per_day": injections_per_day,
+        "fasting_range": fasting_range,
+        "hypo_last_week": hypo_last_week,
+        "burden_score": burden_score,
+        "topics": ";".join(topics),
+        "survey_choice": survey_choice,
+        "other_methods": ";".join(other_methods),
+        "switch_reason": switch_reason,
+        "age": age,
+        "weight": weight,
+        "activity_level": activity_level,
+        "medication_name": medication_name,
+        "route": route,
+    }
+
+    csv_path = "survey_logs.csv"
+    df_new = pd.DataFrame([row])
+
+    if os.path.exists(csv_path):
+        df_existing = pd.read_csv(csv_path)
+        df_out = pd.concat([df_existing, df_new], ignore_index=True)
+    else:
+        df_out = df_new
+
+    df_out.to_csv(csv_path, index=False)
+except Exception:
+    # fail silently; no UI shown to the patient
+    pass
 
 # --------------------------
 # NEW: helper to create a simple PDF from text (keeps your structure)
