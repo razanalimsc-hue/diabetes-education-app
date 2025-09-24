@@ -279,14 +279,55 @@ if st.button(tr("✨ Generate Education Summary")):
                 st.write(summary_text)
 
                 # NEW: simple lifestyle chart (minimal, keeps your flow)
-                st.subheader("📊 Lifestyle Snapshot" if language == "English" else "📊 لمحة عن أسلوب الحياة")
-                exercise_score = 5 if activity_level == "Low" else (7 if activity_level == "Moderate" else 9)
-                df = pd.DataFrame(
-                    {"Score": [6, exercise_score, 7, 5]},
-                    index=["Diet awareness", "Exercise", "Monitoring", "Stress/Sleep"] if language == "English" else
-                          ["الوعي الغذائي", "التمارين", "المراقبة", "الضغط/النوم"]
-                )
-                st.bar_chart(df)
+          # --- Evidence-based Lifestyle Snapshot (scores 0–10) ---
+# Scoring rules (educational, not medical advice):
+# Exercise: ≥150 min/week -> 10; 90–149 -> 7; 1–89 -> 4; 0 -> 0   (ADA)
+if activity_minutes >= 150:
+    exercise_score = 10
+elif activity_minutes >= 90:
+    exercise_score = 7
+elif activity_minutes > 0:
+    exercise_score = 4
+else:
+    exercise_score = 0
+
+# Sleep: 7–9 h/night -> 10; 6 or 10 -> 6; else -> 3  (U-shaped risk evidence)
+if 7.0 <= sleep_hours <= 9.0:
+    sleep_score = 10
+elif sleep_hours in (6.0, 10.0):
+    sleep_score = 6
+else:
+    sleep_score = 3 if sleep_hours > 0 else 0  # 0 if they didn't enter
+
+# Diet adherence (proxy to ADA nutrition guidance)
+diet_map = {"Prefer not to say": 0, "Rarely": 3, "Sometimes": 6, "Often": 9}
+diet_score = diet_map.get(diet_adherence, 0)
+
+# Monitoring frequency (education proxy; individualized needs vary)
+monitor_map = {"Prefer not to say": 0, "Less than daily": 4, "Daily": 7, "Multiple times/day": 9}
+monitor_score = monitor_map.get(monitoring_freq, 0)
+
+# Build and plot the chart (keeps your original look-and-feel)
+st.subheader("📊 Lifestyle Snapshot (educational)")
+df = pd.DataFrame(
+    {
+        "Score": [diet_score, exercise_score, monitor_score, sleep_score]
+    },
+    index=["Diet awareness", "Exercise", "Monitoring", "Sleep"]
+)
+st.bar_chart(df)
+
+# Show the thresholds we used (with citations)
+with st.expander("What do these scores mean? (sources)"):
+    st.markdown(
+        "- **Exercise:** ≥150 min/week of moderate activity is recommended for most adults with diabetes. "
+        "[ADA / AHA] :contentReference[oaicite:3]{index=3}\n"
+        "- **Sleep:** ~7–8(–9) h/night is associated with better glycemic outcomes; short or long sleep links with higher A1c/risk. "
+        "[Diabetes Care, meta-analyses/updates] :contentReference[oaicite:4]{index=4}\n"
+        "- **Diet awareness & Monitoring:** education proxies aligned with ADA lifestyle & nutrition guidance (not prescriptive). "
+        "[ADA Standards & nutrition overview] :contentReference[oaicite:5]{index=5}"
+    )
+
 
                 # NEW: PDF download button
                 pdf_bytes = make_pdf(summary_text)
