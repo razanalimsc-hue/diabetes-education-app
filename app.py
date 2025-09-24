@@ -131,10 +131,9 @@ with st.container():
                     response = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=[
-                            {"role": "system", "content": "You are a diabetes educator. Provide ADA/FDA-aligned patient education. No dosing."},
-                            {"role": "user", "content": f"{lang_note} Give patient-friendly education about {medication_name}, taken via {route}. "
-                                                        f"Include what it is (class), typical use, when/how to take, common side effects, safety red flags, "
-                                                        f"and a reminder to follow clinician instructions."}
+                            {"role": "system", "content": "You are a diabetes educator. Provide ADA/FDA-aligned patient education."},
+                            {"role": "user", "content": f"Give patient-friendly education about {medication_name}, taken via {route}. \
+                                Include how it works, when to take it, precautions, and FDA/ADA notes if available."}
                         ],
                         max_tokens=600,
                         temperature=0.2
