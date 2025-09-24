@@ -100,7 +100,7 @@ with st.container():
         weight = st.number_input("Weight (kg)" if language == "English" else "الوزن (كجم)", 20, 300, 70)
         activity_level = st.selectbox("Activity level" if language == "English" else "مستوى النشاط",
                                       ["Low", "Moderate", "High"])
-        diabetes_type = st.selectbox(tr("Diabetes type"), ["Type 1", "Type 2", "Gestational"])
+        diabetes_type = st.selectbox(tr("Diabetes type"), ["Type 1", "Type 2"])
         therapy_type = st.selectbox(tr("Current therapy"), ["Basal-bolus (MDI)", "Insulin pump", "Oral meds only"])
     with c2:
         fasting_range = st.selectbox(tr("Typical fasting glucose"), ["<70 mg/dL", "70-130 mg/dL", ">130 mg/dL"])
