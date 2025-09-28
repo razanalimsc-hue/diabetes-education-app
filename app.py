@@ -225,7 +225,7 @@ with st.container():
                    if language == "English" else "✅ شكراً لك! تم حفظ تفضيلاتك.")
 # --- Silent CSV logging (optional, invisible to patient) ---
 try:
-    import pandas as pd, os, datetime
+    import os
 
     row = {
         "timestamp_utc": datetime.datetime.utcnow().isoformat(timespec="seconds"),
